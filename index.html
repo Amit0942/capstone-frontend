@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedback Portal</title>
+</head>
+<body>
+    <h2>Submit Feedback</h2>
+    <input id="name" placeholder="Your Name" />
+    <input id="feedback" placeholder="Your Feedback" />
+    <button onclick="submitFeedback()">Submit</button>
+
+    <h2>Upload Feedback Document</h2>
+    <p>Upload a .txt file in this format:<br/>
+       <code>Name: ...<br/>Feedback: ...<br/>Rating: .../5</code>
+    </p>
+    <input type="file" id="fileInput" accept=".txt" />
+    <button onclick="uploadFile()">Upload Document</button>
+
+    <h3>Feedback List</h3>
+    <ul id="list"></ul>
+
+<script>
+const API_BASE = "/api/feedback";
+const UPLOAD_URL = "/api/upload";
+
+async function submitFeedback() {
+    const name = document.getElementById("name").value;
+    const feedback = document.getElementById("feedback").value;
+
+    await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, feedback })
+    });
+
+    loadFeedback();
+}
+
+async function uploadFile() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) {
+        alert("Please select a .txt file first.");
+        return;
+    }
+
+    const text = await file.text();
+
+    await fetch(UPLOAD_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: text
+    });
+
+    loadFeedback();
+}
+
+async function loadFeedback() {
+    const res = await fetch(API_BASE);
+    const data = await res.json();
+
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    data.forEach(item => {
+        const li = document.createElement("li");
+        if (item.type === "document") {
+            li.innerText = item.name + ": " + item.feedback + " (Rating: " + item.rating + ") [doc]";
+        } else {
+            li.innerText = item.name + ": " + item.feedback;
+        }
+        list.appendChild(li);
+    });
+}
+
+loadFeedback();
+</script>
+</body>
+</html>
